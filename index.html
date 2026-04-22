@@ -76,6 +76,17 @@ button {
   cursor: pointer;
 }
 
+button#themeBtn {
+  width: auto;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 #invoice { display: none; }
 
 .invoice-box { padding: 40px; font-size: 14px; }
@@ -144,6 +155,12 @@ button {
 <div class="container">
 
 <h1>Invoice Generator</h1>
+
+<div style="margin-bottom: 20px;">
+  <button onclick="toggleTheme()" id="themeBtn">
+    Toggle theme 🌙
+  </button>
+</div>
 
 <div class="card grid">
   <div>
@@ -242,20 +259,27 @@ function load() {
 
 fields.forEach(f => f.addEventListener("input", save));
 
-function setTheme(theme) {
+function loadTheme() {
+  const saved = localStorage.getItem("theme") || "light";
+  applyTheme(saved);
+}
+
+function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem("theme", theme);
+
+  const btn = document.getElementById("themeBtn");
+  if (btn) {
+    btn.textContent = theme === "dark"
+      ? "Light theme ☀️"
+      : "Dark theme 🌙";
+  }
 }
 
 function toggleTheme() {
   const current = localStorage.getItem("theme") || "light";
   const next = current === "light" ? "dark" : "light";
-  setTheme(next);
-}
-
-function loadTheme() {
-  const saved = localStorage.getItem("theme") || "light";
-  setTheme(saved);
+  applyTheme(next);
 }
 
 function formatMoney(value) {
