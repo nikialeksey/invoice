@@ -14,6 +14,15 @@
   --accent: #635bff;
 }
 
+[data-theme="dark"] {
+  --bg: #0b1220;
+  --card: #111a2e;
+  --text: #e6edf7;
+  --muted: #9aa4b2;
+  --border: #1f2a44;
+  --accent: #7c5cff;
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -106,8 +115,27 @@ button {
 
 @media print {
   body * { visibility: hidden; }
-  #invoice, #invoice * { visibility: visible; }
-  #invoice { position: absolute; left: 0; top: 0; width: 100%; }
+
+  #invoice, #invoice * {
+    visibility: visible;
+  }
+
+  #invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white !important;
+    color: black !important;
+  }
+
+  :root {
+    --bg: #ffffff !important;
+    --card: #ffffff !important;
+    --text: #000000 !important;
+    --muted: #666666 !important;
+    --border: #e6ebf1 !important;
+  }
 }
 </style>
 </head>
@@ -214,6 +242,22 @@ function load() {
 
 fields.forEach(f => f.addEventListener("input", save));
 
+function setTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem("theme") || "light";
+  const next = current === "light" ? "dark" : "light";
+  setTheme(next);
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem("theme") || "light";
+  setTheme(saved);
+}
+
 function formatMoney(value) {
   const currency = document.getElementById("currency").value;
   return new Intl.NumberFormat("en-US", {
@@ -312,6 +356,7 @@ function generate() {
   window.print();
 }
 
+loadTheme();
 load();
 calcTotal();
 </script>
