@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice Generator</title>
+
+<style>
+:root {
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --border: #e2e5ec;
+  --text: #1f2937;
+  --accent: #4f46e5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  margin: 0;
+  padding: 30px;
+  color: var(--text);
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+
+.card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+label {
+  font-size: 12px;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 4px;
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 14px;
+  width: 100%;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#invoice {
+  display: none;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #invoice, #invoice * {
+    visibility: visible;
+  }
+  #invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Invoice Generator</h1>
+
+<div class="card grid">
+  <div>
+    <label>Invoice Number</label>
+    <input id="invoice_number">
+  </div>
+  <div>
+    <label>Invoice Date</label>
+    <input id="invoice_date" type="date">
+  </div>
+  <div>
+    <label>Due Date</label>
+    <input id="due_date" type="date">
+  </div>
+</div>
+
+<div class="card">
+  <h3>Issuer</h3>
+  <div class="grid">
+    <input id="from_name" placeholder="Company Name">
+    <input id="from_phone" placeholder="Phone">
+    <input id="from_email" placeholder="Email">
+    <input id="from_address" placeholder="Address">
+  </div>
+</div>
+
+<div class="card">
+  <h3>Client</h3>
+  <div class="grid">
+    <input id="to_name" placeholder="Client Name">
+    <input id="to_email" placeholder="Email">
+    <input id="to_address" placeholder="Address">
+  </div>
+</div>
+
+<div class="card">
+  <h3>Service</h3>
+  <div class="grid">
+    <input id="item_name" placeholder="Service Name">
+    <input id="item_qty" type="number" placeholder="Quantity">
+    <input id="item_price" type="number" placeholder="Price">
+    <input id="total" placeholder="Total" disabled>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Bank Details</h3>
+  <div class="grid">
+    <input id="bank_beneficiary" placeholder="Beneficiary">
+    <input id="bank_name" placeholder="Bank Name">
+    <input id="bank_iban" placeholder="IBAN">
+    <input id="bank_swift" placeholder="SWIFT">
+  </div>
+</div>
+
+<button onclick="generate()">Generate PDF</button>
+
+<div id="invoice"></div>
+
+</div>
+
+<script>
+const fields = document.querySelectorAll("input");
+
+function save() {
+  fields.forEach(f => localStorage.setItem(f.id, f.value));
+}
+
+function load() {
+  fields.forEach(f => {
+    const val = localStorage.getItem(f.id);
+    if (val) f.value = val;
+  });
+
+  if (!localStorage.getItem("invoice_number")) {
+    let last = parseInt(localStorage.getItem("invoice_counter") || "1");
+    invoice_number.value = "INV-" + String(last).padStart(3, "0");
+  }
+
+  if (!invoice_date.value) {
+    const today = new Date();
+    invoice_date.value = today.toISOString().slice(0,10);
+
+    const due = new Date();
+    due.setDate(today.getDate() + 7);
+    due_date.value = due.toISOString().slice(0,10);
+  }
+}
+
+fields.forEach(f => f.addEventListener("input", save));
+
+function calcTotal() {
+  const qty = parseFloat(item_qty.value) || 0;
+  const price = parseFloat(item_price.value) || 0;
+  total.value = (qty * price).toFixed(2);
+}
+
+item_qty.oninput = calcTotal;
+item_price.oninput = calcTotal;
+
+function generate() {
+  calcTotal();
+
+  let counter = parseInt(localStorage.getItem("invoice_counter") || "1");
+  localStorage.setItem("invoice_counter", counter + 1);
+
+  const html = `
+    <div style="font-family: Arial; padding:40px">
+      <h1>INVOICE</h1>
+      <p><strong>No:</strong> ${invoice_number.value}</p>
+      <p><strong>Date:</strong> ${invoice_date.value}</p>
+      <p><strong>Due:</strong> ${due_date.value}</p>
+
+      <h3>From</h3>
+      <p>
+        ${from_name.value}<br>
+        ${from_address.value}<br>
+        ${from_email.value}<br>
+        ${from_phone.value}
+      </p>
+
+      <h3>To</h3>
+      <p>
+        ${to_name.value}<br>
+        ${to_address.value}<br>
+        ${to_email.value}
+      </p>
+
+      <table border="1" cellspacing="0" cellpadding="8" width="100%">
+        <tr>
+          <th>Description</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Total</th>
+        </tr>
+        <tr>
+          <td>${item_name.value}</td>
+          <td>${item_qty.value}</td>
+          <td>${item_price.value}</td>
+          <td>${total.value}</td>
+        </tr>
+      </table>
+
+      <h2 style="text-align:right;">Total: ${total.value}</h2>
+
+      <h3>Bank Details</h3>
+      <p>
+        Beneficiary: ${bank_beneficiary.value}<br>
+        IBAN: ${bank_iban.value}<br>
+        SWIFT: ${bank_swift.value}<br>
+        Bank: ${bank_name.value}
+      </p>
+    </div>
+  `;
+
+  const inv = document.getElementById("invoice");
+  inv.innerHTML = html;
+  inv.style.display = "block";
+
+  window.print();
+}
+
+load();
+calcTotal();
+</script>
+
+</body>
+</html>
