@@ -6,7 +6,7 @@ Runs entirely in the browser with automatic data persistence via `localStorage`.
 
 ---
 
-## 🚀 Features
+## Features
 
 - Create invoices directly in the browser
 - Fully offline-first (no backend required)
